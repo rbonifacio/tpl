@@ -1,0 +1,192 @@
+\documentclass{beamer}
+
+\usepackage{syntax}
+
+\usepackage{busproofs}
+
+\usepackage{amsmath}
+
+\usefonttheme[onlymath]{serif}
+
+\input{quotes}
+
+
+\title{Types and Programming Languages} 
+\subtitle{Untyped Lambda Calculus}
+
+\author{Rodrigo Bonif\'{a}cio}
+
+\begin{document}
+
+\setlength{\grammarparsep}{20pt plus 1pt minus 1pt} 
+\setlength{\grammarindent}{4em}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}
+  \frametitle{$Lambda-Calculus$} 
+\begin{shadequote}[l]{Benjamin Pierce}
+  \ldots a formal system in which all computation
+  is reduced to the basic operations of function definition
+  and application. 
+\end{shadequote}\pause
+
+\begin{shadequote}[l]{Benjamin Pierce}
+  \ldots Its importance arises from
+  the fact that it can be viewed simultaneously as a {\color{blue}simple
+  programming language and as a mathematical object} about
+  which rigorous statements can be proved.
+\end{shadequote}
+
+\end{frame}
+
+\begin{frame}
+
+  \begin{shadequote}[l]{Benjamin Pierce}
+    In the $lambda-calculus$ everything is a function: the arguments
+    accepted by functions are themselves functions and the result returned
+    by a function is another function. 
+  \end{shadequote} \pause
+
+  \begin{block}{BNF Grammar}
+    \begin{grammar}
+      <Exp> ::= x
+      \alt      $\lambda$x.<Exp>
+      \alt      <Exp> <Exp> 
+    \end{grammar}  
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Syntax}
+
+  Let $V$ be a countable set of variable names. The
+  set of terms is the smallest set $T$ such that
+
+  \begin{enumerate}
+    \item $x \in T$ for every $x \in V$
+    \item if $t_1 \in T$ and $x \in V$, then $\lambda x.t_1 \in T$
+    \item if $t_1 \in T$ and $t_2 in T$, then $t_1\ t_2 \in T$   
+  \end{enumerate}
+
+  \pause
+  The set of \emph{free variables} of a term $t$, written as
+  $FV(t)$, is defined as follows:
+
+  \begin{eqnarray*}
+    FV(x) & = & {x} \\
+    FV(\lambda x . t_1) & = &  FV(t_1) \backslash {x} \\
+    FV(t_1\ t_2) & = & FV(t_1) \cup FV(t_2) 
+  \end{eqnarray*}
+  
+\end{frame}
+
+\begin{frame}
+  \frametitle{Operational Semantics}
+
+  \begin{shadequote}[l]{Benjamin Pierce}
+    The computation consists of rewriting
+    an application whose left-hand component is an
+    abstraction, by {\color{blue}substituting} the right-hand
+    component for the bound variable in the abstraction's body. 
+  \end{shadequote} \pause
+
+  \begin{block}{Graphically}
+       \begin{prooftree}
+       \AxiomC{$(\lambda x . e) e_2 \rightarrow [x \mapsto e_2]e$}
+       \end{prooftree}
+  \end{block}
+
+  \pause
+  \begin{itemize}
+  \item where, $[x \mapsto e_2]e$ means ``the term obtained by
+    replacing all \emph{free occurrences} of $x$ in $e$ by
+    $e_2$''. 
+  \end{itemize}
+\end{frame}
+
+\begin{frame}
+       \begin{prooftree}
+         \AxiomC{$t_1 \rightarrow t_1'$}
+         \RightLabel{\quad (E-App1)}
+         \UnaryInfC{$t_1\ t_2 \rightarrow t_1'\ t_2$}
+       \end{prooftree}
+       
+       \begin{prooftree}
+         \AxiomC{$t_2 \rightarrow t_2'$}
+         \RightLabel{\quad (E-App2)}
+         \UnaryInfC{$t_1\ t_2 \rightarrow t_1\ t_2'$}
+       \end{prooftree}
+
+       \begin{prooftree}
+         \AxiomC{}
+         \RightLabel{\quad (E-AppAbs)}
+         \UnaryInfC{$(\lambda x . t_{12}) v_2 \rightarrow [x \mapsto v_2]t_{12}$}
+       \end{prooftree}
+
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Some examples of interesting functions}
+
+ \begin{description}
+    \item[Identity:] $(\lambda x . x)$ 
+    \item[Function application:] $(\lambda f . \lambda a . (f a)$
+    \item[Self application:] $(\lambda s . s s)$        
+  \end{description}
+  
+\end{frame}
+
+\begin{frame}
+  However, let's follow a seamless
+  transition from \emph{Untyped Arithmetic Expression}
+  to the \emph{Untyped Lambda Calculus}\pause, discussing
+  an intermediate (and more complex) language: \textsc{RBL-Calculus} 
+\end{frame}
+
+\begin{frame}
+  \frametitle{\textsc{RBL-Calculus} syntax}
+
+\begin{grammar}
+  <Exp> ::= True
+  \alt False
+  \alt Num
+  \alt Add <Exp> <Exp> \alt Sub <Exp> <Exp> 
+  \alt And <Exp> <Exp> \alt Or <Exp> <Exp> \alt Not <Exp>
+  \alt Let Var <Exp> <Exp>
+  \alt Var 
+  \alt $\lambda$ Var  <Exp>
+  \alt <Exp> <Exp> 
+\end{grammar}
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Some examples of programs in \textsc{RBL-Caulculus}}
+
+\begin{verbatim}
+  $ add 5 3 
+  $ add 5 (5 3) 
+  $ let x = 5 in x + x
+  $ let inc = \x . x + 1 in inc 4   
+\end{verbatim} 
+\end{frame}
+
+\begin{frame}
+  \frametitle{Scope and Substitution}
+
+  \texttt{let x = $e_1$ in $e_2$} \pause
+  
+  \texttt{let x = 5 in x + x} \pause 
+
+  \texttt{let x = 5 in let x = 3 in x + 3} \pause  
+
+  \texttt{let x = 5 in x + let y = x in x + y} 
+
+\end{frame}
+
+\begin{frame}
+\huge{a bit of Haskell, \ldots} 
+\end{frame}
+\end{document}

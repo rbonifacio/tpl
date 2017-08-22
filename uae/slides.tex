@@ -1,0 +1,212 @@
+\documentclass{beamer}
+
+\usepackage{busproofs}
+
+\usepackage{amsmath}
+
+\usefonttheme[onlymath]{serif}
+
+\input{quotes}
+
+\title{Types and Programming Languages} 
+\subtitle{Untyped Arithmetic Expressions}
+
+\author{Rodrigo Bonif\'{a}cio}
+\date{2017/08}
+
+\begin{document}
+
+\begin{frame}
+\titlepage
+\end{frame}
+
+\begin{frame}
+\begin{shadequote}[l]{Benjamin Pierce}
+\ldots a small language of numbers and booleans'' \ldots though 
+``a straightfoward vehicle for the introduction of several fundamental concepts
+\end{shadequote}
+
+\pause 
+\begin{itemize}
+\item abstract syntax tree
+\item inductive definitions 
+\item proofs
+\end{itemize}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Syntactic Forms} 
+
+\begin{itemize}
+\item boolean constants: \texttt{true}, \texttt{false}
+\item conditional expressions
+\item numeric constant: \texttt{zero}
+\item arithmetic operators: \texttt{succ}, \texttt{pred}
+\item testins operation: \texttt{isZero} 
+\end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\frametitle{Grammar} 
+
+\begin{verbatim}
+ Exp ::= true
+         false 
+         if Exp then Exp else Exp
+         0
+         succ Exp
+         pred Exp
+         iszero Exp
+\end{verbatim}
+\end{frame}
+
+\begin{frame}
+In this language, the results of evaluation 
+are terms of a particularly simple form: they will 
+allways be either boolean constants or numbers (values). 
+\end{frame}
+
+\begin{frame}
+The (BNF like) grammar is just a compact notation 
+for the following inductive definition (often found 
+in Computer Science Logic Books). 
+
+\begin{definition}{{\color{blue}Expressions, inductively.}}
+The set of expressions is the smallest set $T$
+such that
+
+\begin{enumerate}
+  \item $\{true, false, 0\}\subseteq\ T$
+  \item if $t_1 \in\ T$ then $\{succ\ t_1, pred\ t_1, iszero\ t_1\} \subseteq\ T$
+  \item if $t_1 \in\ T$, $t_2 \in\ T$, and  $t_3 \in\ T$, then $if\ t_1\ then\ t_2\ else\ t_3 \in\ T$
+\end{enumerate}
+\end{definition} 
+
+\pause The book presents two other alternatives for specifying the 
+syntax of a language. \pause Here we will mostly work with BNF 
+based grammar specification. 
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Induction on terms} 
+
+The inductive structure of expressions allow us 
+to give inductive definitions of functions over 
+the set of expressions. 
+
+\begin{definition}{{\color{blue}The set of constants of an expression}}
+\begin{eqnarray*}
+Consts(true)         & = & \{true\}         \\
+Consts(false)        & = & \{false\}        \\
+Consts(0)            & = & {0}            \\ \pause 
+Consts(succ\ t_1)    & = & Consts(t_1)    \\ 
+Consts(pred\ t_1)    & = & Consts(t_1)    \\ 
+Consts(iszero\ t_1)  & = & Consts(t_1)    \\ \pause 
+Consts(if\ t_1 then\ t_2 else t_3) & = & Consts(t_1) \cup Consts(t_2) \cup Consts(t_3) \\  
+\end{eqnarray*}
+
+\end{definition} 
+\end{frame}
+
+\begin{frame}
+\frametitle{Small step operational semantics}
+
+
+\begin{shadequote}[l]{Benjamin Pierce}
+\ldots An \emph{evaluation relation} on expressions, written 
+as $t \rightarrow t'$ and pronounced ``$t$ evaluates to $t'$ in 
+one step''. The intuition is that, if $t$ is the state of a 
+computation at a given moment, then the computation can make 
+a step and change its state to $t'$. The evaluation relation 
+is defined using a set of inference rules (axioms and proper rules). 
+\end{shadequote}
+
+\end{frame}
+
+
+\begin{frame}
+\begin{definition}{Normal Form}
+A term $t$ is in normal form if no evaluation rule 
+applies to it---i.e., if there is no $t'$ such that 
+$t \rightarrow t'$. \pause Every value is in normal 
+form. \pause Normal forms that are not values represent 
+that something went wrong.  
+\end{definition}
+\end{frame}
+\begin{frame}
+\frametitle{Axioms (computation rules)} 
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\quad (E-PredZero)}
+\UnaryInfC{$pred\ 0 \rightarrow 0$}
+\end{prooftree} 
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\quad (E-PredSucc)}
+\UnaryInfC{$pred(succ\ t_1) \rightarrow t_1$}
+\end{prooftree} 
+
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\quad (E-IsZeroZero)}
+\UnaryInfC{$iszero\ 0 \rightarrow true$}
+\end{prooftree} 
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\quad (E-IsZeroSucc)}
+\UnaryInfC{$iszero(succ\ t_1) \rightarrow false$}
+\end{prooftree} 
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\quad (E-IfTrue)}
+\UnaryInfC{$if\ true\ then\ t_1\ else\ t_2 \rightarrow t_1$} 
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{}
+\RightLabel{\quad (E-IfFalse)}
+\UnaryInfC{$if\ false\ then\ t_1\ else\ t_2 \rightarrow t_2$}
+\end{prooftree}
+
+\end{frame}
+
+\begin{frame}
+\frametitle{Proper rules (congruence rules)} 
+
+\begin{prooftree}
+\AxiomC{$t_1 \rightarrow t_1'$}
+\RightLabel{\quad (E-If)}
+\UnaryInfC{$if\ t_1\ then\ t_2\ else\ t_3 \rightarrow if\ t_1' \ then\ t_2\ else\ t_3$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$t_1 \rightarrow t_1'$}
+\RightLabel{\quad (E-Succ)}
+\UnaryInfC{$succ\ t_1\ \rightarrow succ\ t_1'$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$t_1 \rightarrow t_1'$}
+\RightLabel{\quad (E-Pred)}
+\UnaryInfC{$pred\ t_1\ \rightarrow pred\ t_1'$}
+\end{prooftree}
+
+\begin{prooftree}
+\AxiomC{$t_1 \rightarrow t_1'$}
+\RightLabel{\quad (E-IsZero)}
+\UnaryInfC{$iszero\ t_1\ \rightarrow iszero\ t_1'$}
+\end{prooftree}
+\end{frame}
+
+
+\begin{frame}
+Let's code the Untyped Arithmetic Expressions in Haskell \ldots
+\end{frame}
+\end{document}

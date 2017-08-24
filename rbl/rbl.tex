@@ -187,6 +187,37 @@
 \end{frame}
 
 \begin{frame}
-\huge{a bit of Haskell, \ldots} 
+\huge{a bit of Haskell, \ldots + some test cases} 
 \end{frame}
+
+\begin{frame}[fragile]
+  how can we translate programs in \textsc{RBL-Calculus} into
+  \textsc{$\lambda-calculus$} programs?
+
+  \pause
+
+  \begin{block}{We will need a set of Haskell modules}
+    \begin{description}
+      \item[RBL:] the \textsc{RBL-Calculus} implementation
+      \item[Lambda:] the \textsc{$\lambda-calculus$} implementation
+      \item[Compiler:] the translator implementation
+       \begin{verbatim}
+          translate :: R.Expression -> L.Expression
+       \end{verbatim}
+    \end{description}
+  \end{block}
+\end{frame}
+
+\begin{frame}
+  Let's start with simple scenarios. First of all,
+  \texttt{Let} expressions are redundant. That is,
+  it is more or less easy to convert a \texttt{Let}
+  expression into an application. 
+\end{frame}
+
+\begin{frame}
+  Next, how can we represent an \textsc{If-Then-Else}
+  statements using the \textsc{$\lambda-calculus}?$
+\end{frame}
+
 \end{document}

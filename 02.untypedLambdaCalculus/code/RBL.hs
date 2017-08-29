@@ -37,12 +37,13 @@ data Expression = B Bool
 -- There is an statement to each type of expression of our language. 
 
 eval :: Expression -> Expression
-eval (B b)                    = (B b)
+eval (B b)                    = B b
 eval (N n)                    = N n
 eval (Add e1 e2)              = numBinExpression  (+) e1 e2
 eval (Sub e1 e2)              = numBinExpression  (-) e1 e2 
 eval (And e1 e2)              = boolBinExpression (&&) e1 e2
 eval (Or e1 e2)               = boolBinExpression (||) e1 e2
+eval (Not e)                  = let (B b) = eval e in B (not b)
 eval (IfThenElse c e1 e2)     = if (eval c == (B True)) then eval e1 else eval e2
 eval (Let v e1 e2)            = eval (subst v e1 e2)  
 eval (Ref v)                  = error "we should not evaluate a free variable"
@@ -62,10 +63,11 @@ subst v e (Add e1 e2)           = Add (subst v e e1) (subst v e e2)
 subst v e (Sub e1 e2)           = Sub (subst v e e1) (subst v e e2)
 subst v e (And e1 e2)           = And (subst v e e1) (subst v e e2)
 subst v e (Or e1 e2)            = Or (subst v e e1) (subst v e e2)
+subst v e (Not e1)              = Not (subst v e e1)  
 subst v e (IfThenElse e1 e2 e3) = IfThenElse (subst v e e1) (subst v e e2) (subst v e e3)
 subst v e (Let x e1 e2)
  | v == x                       = Let x (subst v e e1) e2
- | otherwise                    = Let x (subst v e e1) (subst v e e2) 
+ | otherwise                    = Let x (subst v (eval e) e1) (subst v e e2) 
 subst v e (Ref x)
  | v == x                       = e
  | otherwise                    = (Ref x)

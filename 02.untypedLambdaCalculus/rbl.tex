@@ -191,8 +191,8 @@
 \end{frame}
 
 \begin{frame}[fragile]
-  how can we translate programs in \textsc{RBL-Calculus} into
-  \textsc{$\lambda-calculus$} programs?
+  How can we translate \textsc{RBL-Calculus} programs into
+  \textsc{$\lambda-calculus$}?
 
   \pause
 
@@ -201,23 +201,70 @@
       \item[RBL:] the \textsc{RBL-Calculus} implementation
       \item[Lambda:] the \textsc{$\lambda-calculus$} implementation
       \item[Compiler:] the translator implementation
-       \begin{verbatim}
-          translate :: R.Expression -> L.Expression
-       \end{verbatim}
     \end{description}
   \end{block}
+
+\begin{center}
+\begin{verbatim}
+translate :: R.Expression -> L.Expression
+\end{verbatim}
+\end{center}
+\end{frame}
+
+
+\begin{frame}
+  \frametitle{How to translate \textsc{If-Then-Else} expressions into $\lambda$-terms?} 
+
+  \begin{itemize}
+    \item that seems easy. it is just a \texttt{test} function that 
+    expects three arguments: if the first is \texttt{true} 
+    this function returns the second argument; otherwise, 
+    it returns the third.  \pause 
+
+    \item in this way, we can envision that \texttt{true} is a 
+    function that returns the first of a pair and \texttt{false} is 
+    a function that returns the second of a pair.  \pause 
+  \end{itemize} 
+
+  \begin{center}
+    \begin{eqnarray*}
+      true  & = & \lambda x . \lambda y . x \\
+      false & = & \lambda x . \lambda y . y  \\
+      test  & = & \lambda c . \lambda e_1 . \lambda e_2 . c\ e_1\ e_2 
+    \end{eqnarray*}
+  \end{center}
+
 \end{frame}
 
 \begin{frame}
-  Let's start with simple scenarios. First of all,
-  \texttt{Let} expressions are redundant. That is,
-  it is more or less easy to convert a \texttt{Let}
-  expression into an application. 
+ \frametitle{How to translate \textsc{Let} expressions into $\lambda$-terms?} 
+
+ First, let's consider the simple expression in \textsc{RBL} $Let x = 10 in x + x$. \pause 
+ We can rewrite this expression in terms of an \textsc{RBL} lambda expression\pause, that is 
+ $(\lambda x . x + x) (10)$. Therefore, \texttt{Let} expressions are redundant even in 
+ the \textsc{RBL-Calculus}.
+  
 \end{frame}
 
 \begin{frame}
-  Next, how can we represent an \textsc{If-Then-Else}
-  statements using the \textsc{$\lambda-calculus}?$
-\end{frame}
+ \frametitle{How to translate numbers into $\lambda$ terms?}
 
+  First of all, we can represent natural numbers using the 
+  following encoding   
+  
+  \begin{eqnarray*}
+   C_0 & = & \lambda s . \lambda z . z \\ 
+   C_1 & = & \lambda s . \lambda z . s\ z \\ 
+   C_2 & = & \lambda s . \lambda z . s (s\ z) \\  
+   \ldots & = & \ldots
+  \end{eqnarray*}
+
+  We can define the successor function on \emph{Church numerals} as follows: 
+  
+  \begin{eqnarray*} 
+    succ = \lambda n . \lambda s . \lambda z . s (n\ s\ z) \\ \pause 
+    plus = \lambda m . \lambda n . \lambda s . \lambda z . \framebox{?} \\
+   times = \lambda m . \lambda n . \lambda s . \lambda z . \framebox{?} 
+  \end{eqnarray*} 
+\end{frame}
 \end{document}

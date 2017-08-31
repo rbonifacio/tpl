@@ -163,7 +163,7 @@
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Some examples of programs in \textsc{RBL-Caulculus}}
+  \frametitle{Some examples of programs in \textsc{RBL-Calculus}}
 
 \begin{verbatim}
   $ add 5 3 
@@ -206,7 +206,7 @@
 
 \begin{center}
 \begin{verbatim}
-translate :: R.Expression -> L.Expression
+translate :: R.Expression -> L.Term
 \end{verbatim}
 \end{center}
 \end{frame}
@@ -239,7 +239,7 @@ translate :: R.Expression -> L.Expression
 \begin{frame}
  \frametitle{How to translate \textsc{Let} expressions into $\lambda$-terms?} 
 
- First, let's consider the simple expression in \textsc{RBL} $Let x = 10 in x + x$. \pause 
+ First, let's consider the simple expression in \textsc{RBL} $Let x = 10\ in\ x + x$. \pause 
  We can rewrite this expression in terms of an \textsc{RBL} lambda expression\pause, that is 
  $(\lambda x . x + x) (10)$. Therefore, \texttt{Let} expressions are redundant even in 
  the \textsc{RBL-Calculus}.
@@ -259,12 +259,55 @@ translate :: R.Expression -> L.Expression
    \ldots & = & \ldots
   \end{eqnarray*}
 
+  \pause That is beautiful. Any number $n$ is an \emph{activity} 
+  entity, which \emph{does something ``n'' times}. 
   We can define the successor function on \emph{Church numerals} as follows: 
   
   \begin{eqnarray*} 
     succ = \lambda n . \lambda s . \lambda z . s (n\ s\ z) \\ \pause 
-    plus = \lambda m . \lambda n . \lambda s . \lambda z . \framebox{?} \\
-   times = \lambda m . \lambda n . \lambda s . \lambda z . \framebox{?} 
+   \end{eqnarray*} 
+\end{frame}
+
+\begin{frame}
+\frametitle{Addition (plus)} 
+
+ \begin{eqnarray*} 
+   plus\ c_3\ c_2 & = & plus\ {\color{blue}(\lambda s.\lambda z. s\ (s\ (s\ zero)))}\ 
+                              {\color{red}(\lambda s. \lambda z. s\ (s\ zero))} \\  \pause
+                  & = & \lambda s. \lambda z. {\color{blue}s\ (s\ (s} {\color{red}\ (s\ (s\ zero))} \\ \pause 
+   plus & = & \lambda m . \lambda n . \lambda s . \lambda z . m\ s\ (n\ s\ z) 
+ \end{eqnarray*} 
+
+\end{frame}
+
+\begin{frame}
+ \frametitle{Multiplication (times)} 
+
+ \begin{eqnarray*} 
+   times\ c_3\ c_2 & = & times (\lambda s . \lambda z .\ s\ (s\ (s\ zero)))\ 
+                               (\lambda s . \lambda z .\ s\ (s\ (s\ zero))) \\ \pause
+                   & = & \lambda s . \lambda z .\ s\ (s\ (s\ (s\ (s\ (s\ (s\ (s\ (s\ zero)))))))) \\ \pause  
+   times & = & \lambda m . \lambda n . \lambda s . \lambda z . m\ (plus\ n)\ c_0 \pause
+ \end{eqnarray*} 
+
+  That is, $times\ c_3\ c_2$ yields $plus\ c_2\ (plus\ c_2\ (plus\ c_2\ zero))$.   \pause 
+
+  \begin{eqnarray*}
+   iszero & = & \lambda m . m (\lambda x . false) true 
   \end{eqnarray*} 
+ 
+\end{frame}
+
+\begin{frame}
+\frametitle{Other useful combinators}
+
+\begin{eqnarray*}
+ omega & = & (\lambda x . x)\ (\lambda x . x) \\
+ fix & = & \lambda f . (\lambda x . f (\lambda y . x\ x\ y))\ (\lambda x . f (\lambda y . x\ x\ y))
+\end{eqnarray*}
+\end{frame}
+
+\begin{frame}
+\titlepage
 \end{frame}
 \end{document}

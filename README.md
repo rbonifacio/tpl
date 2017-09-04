@@ -26,6 +26,16 @@ Sugestões de leitura adicionais:
 
 Estão previstos dois projetos na disciplina, cada um com duas entregas. 
 
-### Primeira Entrega do Projeto 1
+### Primeira Entrega do Projeto 1 (entrega: 18/09)
 
-a) 
+a) Elabore um resumo com uma discussão sobre alfa-equivalência, 
+destando (a) o porquê de termos que aplicar conversões alfa no 
+calculo lambda e (b) apresentando a implementação de um algoritmo 
+para conversão alfa (aplicado na nossa implementação do cálculo 
+lambda). 
+
+b) Implemente um tradutor entre as linguagens RBL-Calculus e 
+o Lambda Calculus, usando como base as implementações em sala 
+de aula. Para isso, implemente uma biblioteca de funções para 
+o Lambda Calculus, incluindo funções para representar valores e 
+operadores envolvendo booleanos e inteiros. 

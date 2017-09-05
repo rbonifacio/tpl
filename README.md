@@ -39,3 +39,7 @@ o Lambda Calculus, usando como base as implementações em sala
 de aula. Para isso, implemente uma biblioteca de funções para 
 o Lambda Calculus, incluindo funções para representar valores e 
 operadores envolvendo booleanos e inteiros. 
+
+c) Implemente cenários de teste para a nossa linguagem
+de Lambda Calculus, em particular cenários que exercitam
+o fix-point combinator para definir funções recursivas. 

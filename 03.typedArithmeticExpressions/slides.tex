@@ -83,6 +83,7 @@ we shoud assign a type to a term {\color{blue}statically},
 and thus we will follow a conservative approach, rejecting 
 a program of the form \texttt{if true then 0 else false}---even though 
 it won't get stuck. 
+\end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]
@@ -93,6 +94,7 @@ it won't get stuck.
  T ::= Bool            type of booleans
      | Nat      type of natural numbers       
 \end{verbatim}
+\end{block} \pause 
 
 \begin{prooftree}
 \AxiomC{}
@@ -111,7 +113,6 @@ it won't get stuck.
 \RightLabel{\quad (T-False)}
 \UnaryInfC{$false\ : Bool$}
 \end{prooftree}
-\end{block}
 
 \end{frame}
 
@@ -122,32 +123,22 @@ it won't get stuck.
 \AxiomC{$t_2 : T$}
 \AxiomC{$t_3 : T$}
 \RightLabel{\quad (T-If)}
-\TrinaryInfC{$false\ : Bool$}
+\TrinaryInfC{$If\ t_1\ Then\ t_2\ Else\ t_3\ : T$}
 \end{prooftree}
 
-\begin{prooftreee}
+\begin{prooftree}
 \AxiomC{$t_1 : Nat$}
 \RightLabel{\quad (T-Succ)}
 \UnaryInfC{$succ\ t_1: Nat$}
 \end{prooftree} 
 
-
-\begin{prooftreee}
-\AxiomC{$t_1 : Nat$}
-\RightLabel{\quad (T-Succ)}
-\UnaryInfC{$succ\ t_1: Nat$}
-\end{prooftree} 
-
-
-\begin{prooftreee}
+\begin{prooftree}
 \AxiomC{$t_1 : Nat$}
 \RightLabel{\quad (T-Pred)}
 \UnaryInfC{$pred\ t_1: Nat$}
 \end{prooftree} 
 
-
-
-\begin{prooftreee}
+\begin{prooftree}
 \AxiomC{$t_1 : Nat$}
 \RightLabel{\quad (T-IsZero)}
 \UnaryInfC{$iszero\ t_1: Bool$}
@@ -156,123 +147,22 @@ it won't get stuck.
 \end{frame}
 
 \begin{frame}
-\frametitle{Induction on terms} 
+\begin{block}{Type Soundness (safety)}
+\begin{itemize}
+ \item Progress 
+ \item Preservation 
+\end{itemize}
+\end{block}
 
-The inductive structure of expressions allow us 
-to give inductive definitions of functions over 
-the set of expressions. 
-
-\begin{definition}{{\color{blue}The set of constants of an expression}}
-\begin{eqnarray*}
-Consts(true)         & = & \{true\}         \\
-Consts(false)        & = & \{false\}        \\
-Consts(0)            & = & {0}            \\ \pause 
-Consts(succ\ t_1)    & = & Consts(t_1)    \\ 
-Consts(pred\ t_1)    & = & Consts(t_1)    \\ 
-Consts(iszero\ t_1)  & = & Consts(t_1)    \\ \pause 
-Consts(if\ t_1 then\ t_2 else t_3) & = & Consts(t_1) \cup Consts(t_2) \cup Consts(t_3) \\  
-\end{eqnarray*}
-
-\end{definition} 
+\pause This is one of the most important 
+concepts of our course. 
 \end{frame}
 
 \begin{frame}
-\frametitle{Small step operational semantics}
-
-
-\begin{shadequote}[l]{Benjamin Pierce}
-\ldots An \emph{evaluation relation} on expressions, written 
-as $t \rightarrow t'$ and pronounced ``$t$ evaluates to $t'$ in 
-one step''. The intuition is that, if $t$ is the state of a 
-computation at a given moment, then the computation can make 
-a step and change its state to $t'$. The evaluation relation 
-is defined using a set of inference rules (axioms and proper rules). 
-\end{shadequote}
-
-\end{frame}
-
-
-\begin{frame}
-\begin{definition}{Normal Form}
-A term $t$ is in normal form if no evaluation rule 
-applies to it---i.e., if there is no $t'$ such that 
-$t \rightarrow t'$. \pause Every value is in normal 
-form. \pause Normal forms that are not values represent 
-that something went wrong.  
-\end{definition}
-\end{frame}
-\begin{frame}
-\frametitle{Axioms (computation rules)} 
-
-\begin{prooftree}
-\AxiomC{}
-\RightLabel{\quad (E-PredZero)}
-\UnaryInfC{$pred\ 0 \rightarrow 0$}
-\end{prooftree} 
-
-\begin{prooftree}
-\AxiomC{}
-\RightLabel{\quad (E-PredSucc)}
-\UnaryInfC{$pred(succ\ t_1) \rightarrow t_1$}
-\end{prooftree} 
-
-
-\begin{prooftree}
-\AxiomC{}
-\RightLabel{\quad (E-IsZeroZero)}
-\UnaryInfC{$iszero\ 0 \rightarrow true$}
-\end{prooftree} 
-
-\begin{prooftree}
-\AxiomC{}
-\RightLabel{\quad (E-IsZeroSucc)}
-\UnaryInfC{$iszero(succ\ t_1) \rightarrow false$}
-\end{prooftree} 
-
-\begin{prooftree}
-\AxiomC{}
-\RightLabel{\quad (E-IfTrue)}
-\UnaryInfC{$if\ true\ then\ t_1\ else\ t_2 \rightarrow t_1$} 
-\end{prooftree}
-
-\begin{prooftree}
-\AxiomC{}
-\RightLabel{\quad (E-IfFalse)}
-\UnaryInfC{$if\ false\ then\ t_1\ else\ t_2 \rightarrow t_2$}
-\end{prooftree}
-
+\huge{Haskell implementation}
 \end{frame}
 
 \begin{frame}
-\frametitle{Proper rules (congruence rules)} 
-
-\begin{prooftree}
-\AxiomC{$t_1 \rightarrow t_1'$}
-\RightLabel{\quad (E-If)}
-\UnaryInfC{$if\ t_1\ then\ t_2\ else\ t_3 \rightarrow if\ t_1' \ then\ t_2\ else\ t_3$}
-\end{prooftree}
-
-\begin{prooftree}
-\AxiomC{$t_1 \rightarrow t_1'$}
-\RightLabel{\quad (E-Succ)}
-\UnaryInfC{$succ\ t_1\ \rightarrow succ\ t_1'$}
-\end{prooftree}
-
-\begin{prooftree}
-\AxiomC{$t_1 \rightarrow t_1'$}
-\RightLabel{\quad (E-Pred)}
-\UnaryInfC{$pred\ t_1\ \rightarrow pred\ t_1'$}
-\end{prooftree}
-
-\begin{prooftree}
-\AxiomC{$t_1 \rightarrow t_1'$}
-\RightLabel{\quad (E-IsZero)}
-\UnaryInfC{$iszero\ t_1\ \rightarrow iszero\ t_1'$}
-\end{prooftree}
-\end{frame}
-
-
-\begin{frame}
-Let's code the Untyped Arithmetic Expressions in Haskell \ldots
+ \titlepage
 \end{frame}
 \end{document}

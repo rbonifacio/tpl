@@ -16,6 +16,8 @@ Sugestões de leitura adicionais:
 
 - Practical Foundations of Programming Languages (R. Happer)
 
+- Computation and Deduction (F. Pfenning, http://www.cs.cmu.edu/~twelf/notes/cd.pdf) 
+
 - An Introduction to Functional Programming Through Lambda Calculus (G. Michaelson)
 
 - Real World Haskell (B. O'Sullivan, et al.) 

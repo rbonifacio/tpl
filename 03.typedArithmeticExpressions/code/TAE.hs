@@ -16,21 +16,32 @@ data Exp = True
          | IsZero Exp
  deriving(Eq, Show)
 
+data Value = Num Exp
+           | Bool Exp 
+ deriving(Eq, Show)
 
-eval :: Exp -> Exp
-eval True = True
-eval False = False
-eval Zero = Zero 
-eval (Succ exp) = Succ (eval exp)
-eval (Pred Zero) = Zero
-eval (Pred (Succ exp)) = eval exp
-eval (Pred exp) = Pred (eval exp)
-eval (IfThenElse True exp2 exp3) = eval exp2
-eval (IfThenElse False exp2 exp3) = eval exp3
-eval (IfThenElse exp1 exp2 exp3) = IfThenElse (eval exp1) exp2 exp3
-eval (IsZero Zero) = True
-eval (IsZero (Succ exp)) = False
-eval (IsZero exp) = IsZero (eval exp) 
+eval :: Exp -> Value 
+eval True = Bool True
+eval False = Bool False
+eval Zero = Num Zero
+
+eval (Succ exp) = Num (Succ n)
+ where
+   (Num n) = eval exp
+
+eval (Pred Zero) = Num Zero
+eval (Pred (Succ n)) = Num n
+eval (Pred exp) = Num n
+ where 
+   (Num n) = eval exp
+   
+eval (IfThenElse exp1 exp2 exp3) =
+  if (eval exp1 == Bool True)
+  then eval exp2
+  else eval exp3 
+
+eval (IsZero exp) =
+  if (eval exp == Num Zero) then Bool True else Bool False 
 
 typeChecker :: Exp -> Maybe Type
 typeChecker True  = Just TBool

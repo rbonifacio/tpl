@@ -302,9 +302,15 @@ translate :: R.Expression -> L.Term
 \frametitle{Other useful combinators}
 
 \begin{eqnarray*}
- omega & = & (\lambda x . x)\ (\lambda x . x) \\
+ omega & = & (\lambda x . x\ x)\ (\lambda x . x\ x) \\
  fix & = & \lambda f . (\lambda x . f (\lambda y . x\ x\ y))\ (\lambda x . f (\lambda y . x\ x\ y))
-\end{eqnarray*}
+\end{eqnarray*} \pause
+
+In order to create a recursive function $f$, we must 
+declare $g = \lambda f . <body\ containing\ f>$ and
+than $h = fix\ g$. 
+
+
 \end{frame}
 
 \begin{frame}

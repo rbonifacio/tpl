@@ -22,11 +22,14 @@ type Label = String
 
 type RItem = (Label, Term)
 
+type TItem = (Term)
+
 data Type = TBool
           | TInt
           | TString 
           | TUnit
           | TRecord [Maybe Type]
+          | TTuple [Maybe Type]
           | TArrow Type Type
      deriving(Eq, Show)
 
@@ -39,6 +42,7 @@ data Term = Var Id
           | S String 
           | Unit
           | Record [RItem]
+          | Tuple [TItem]
           | Projection Term Label
           | IfThenElse Term Term Term
           | Add Term Term
@@ -49,6 +53,7 @@ data Value = VBool Bool
            | VString String 
            | VUnit
            | VRecord [RItem]
+           | VTuple [TItem]
            | VFunction (Id, Type) Term 
 
 interp :: Term -> Value
@@ -77,6 +82,9 @@ gamma |- (Let v e1 e2)      = gamma          |- e1 >>= \t1 ->
 
 gamma |- (Record items)     = let res = map (\(l,t) -> gamma |- t) items
                               in Just (TRecord res) 
+
+gamma |- (Tuple items)      = let res = map (\(t) -> gamma |- t) items
+                              in Just (TTuple res)
 
 gamma |- (Lambda (x, t1) t) = ((x,t1):gamma) |- t >>= \t2 -> return (TArrow t1 t2)
 

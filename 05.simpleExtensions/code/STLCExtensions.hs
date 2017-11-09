@@ -30,6 +30,7 @@ data Type = TBool
           | TUnit
           | TRecord [Maybe Type]
           | TTuple [Maybe Type]
+       -- | TProjection [Maybe Type]
           | TArrow Type Type
      deriving(Eq, Show)
 
@@ -43,7 +44,7 @@ data Term = Var Id
           | Unit
           | Record [RItem]
           | Tuple [TItem]
-          | Projection Term Label
+       -- | Projection Label Term
           | IfThenElse Term Term Term
           | Add Term Term
         deriving(Eq, Show)  
@@ -112,3 +113,17 @@ lookup k [] = Nothing
 lookup k ((v, t):tail)
  | k == v = Just t
  | otherwise = lookup k tail 
+
+ 
+-- | A match function. It combines a label list and 
+-- a term list to a Record type
+match :: [Label] -> [Term] -> Maybe Term
+match ls ts = Record <$> matchItems ls ts 
+
+
+-- | A match items funciton. It combines the labels and terms
+-- in a list so that the Record is built
+matchItems :: [l] -> [t] -> Maybe [(l,t)]
+matchItems [] [] = Just []
+matchItems (l:ls) (t:ts) = ((l,t):) <$> matchItems ls ts
+matchItems _ _ = Nothing

@@ -30,7 +30,8 @@ data Type = TBool
           | TUnit
           | TRecord [Maybe Type]
           | TTuple [Maybe Type]
-          | TProjection Type
+          | TTProjection Type
+          | TRProjection Type
           | TArrow Type Type
      deriving(Eq, Show)
 
@@ -44,7 +45,8 @@ data Term = Var Id
           | Unit
           | Record [RItem]
           | Tuple [TItem]
-          | Projection Label Term
+          | TProjection Int Term
+          | RProjection Label Term
           | IfThenElse Term Term Term
           | Add Term Term
         deriving(Eq, Show) 
@@ -55,10 +57,16 @@ data Value = VBool Bool
            | VUnit
            | VRecord [RItem]
            | VTuple [TItem]
-           | VFunction (Id, Type) Term 
+           | VRProjection Term 
+           | VTProjection Term
+           | VFunction (Id, Type) Term  
+        deriving(Eq, Show) 
 
 interp :: Term -> Value
-interp = undefined
+interp (Record items)             = VRecord items
+interp (Tuple items)              = VTuple items 
+interp (RProjection label record) = VRProjection (searchRecord (label) (record))
+interp (TProjection index tuple)  = VTProjection (searchTuple (index) (tuple))
 
 -- | The type checker function. It returns either a
 -- type (when the expression is well typed) or Nothing,
@@ -67,45 +75,47 @@ interp = undefined
 
 -- a definition of the type checker function for each expression.
 
-gamma |- (B b)                     = Just TBool
+gamma |- (B b)                      = Just TBool
 
-gamma |- (N n)                     = Just TInt
+gamma |- (N n)                      = Just TInt
 
-gamma |- (S s)                     = Just TString
+gamma |- (S s)                      = Just TString
 
-gamma |- Unit                      = Just TUnit
+gamma |- Unit                       = Just TUnit
 
-gamma |- (Var v)                   = lookup v gamma >>= \t1 -> Just t1
+gamma |- (Var v)                    = lookup v gamma >>= \t1 -> Just t1
 
-gamma |- (Let v e1 e2)             = gamma          |- e1 >>= \t1 ->
+gamma |- (Let v e1 e2)              = gamma          |- e1 >>= \t1 ->
                                      ((v,t1):gamma) |- e2 >>= \t2 ->
                                      Just t2                         
 
-gamma |- (Record items)            = let res = map (\(l,t) -> gamma |- t) items
+gamma |- (Record items)             = let res = map (\(l,t) -> gamma |- t) items
                                       in Just (TRecord res) 
 
-gamma |- (Tuple items)             = let res = map (\(t) -> gamma |- t) items
+gamma |- (Tuple items)              = let res = map (\(t) -> gamma |- t) items
                                       in Just (TTuple res)
 
-gamma |- (Projection label record) = gamma |- (search (label) (record)) >>= \t1 -> return (TProjection t1)
+gamma |- (RProjection label record) = gamma |- (searchRecord (label) (record)) >>= \t1 -> return (TRProjection t1)
 
-gamma |- (Lambda (x, t1) t)        = ((x,t1):gamma) |- t >>= \t2 -> return (TArrow t1 t2)
+gamma |- (TProjection index tuple)  = gamma |- (searchTuple (index) (tuple)) >>= \t1 -> return (TTProjection t1)
 
-gamma |- (App e1 e2)               = gamma |- e1 >>= \t1 ->
-                                     gamma |- e2 >>= \t2 ->
-                                     case t1 of
-                                     (TArrow t11 t12) -> if t12 == t2 then Just t12 else Nothing
-                                     otherwise -> Nothing
+gamma |- (Lambda (x, t1) t)         = ((x,t1):gamma) |- t >>= \t2 -> return (TArrow t1 t2)
+
+gamma |- (App e1 e2)                = gamma |- e1 >>= \t1 ->
+                                      gamma |- e2 >>= \t2 ->
+                                      case t1 of
+                                      (TArrow t11 t12) -> if t12 == t2 then Just t12 else Nothing
+                                      otherwise -> Nothing
                          
-gamma |- (IfThenElse c t e)        = gamma |- c >>= \t1 ->
-                                     gamma |- t >>= \t2 ->
-                                     gamma |- e >>= \t3 ->
-                                     if(t1 == TBool && t2 == t3) then (Just t2) else Nothing
+gamma |- (IfThenElse c t e)         = gamma |- c >>= \t1 ->
+                                      gamma |- t >>= \t2 ->
+                                      gamma |- e >>= \t3 ->
+                                      if(t1 == TBool && t2 == t3) then (Just t2) else Nothing
 
     
-gamma |- (Add e1 e2)               = gamma |- e1 >>= \t1 ->
-                                     gamma |- e2 >>= \t2 ->
-                                     if(t1 == TInt && t2 == TInt) then return TInt else Nothing
+gamma |- (Add e1 e2)                = gamma |- e1 >>= \t1 ->
+                                      gamma |- e2 >>= \t2 ->
+                                      if(t1 == TInt && t2 == TInt) then return TInt else Nothing
 
 
 -- | A lookup function. It searches for a specific
@@ -130,8 +140,16 @@ matchItems [] []         = Just []
 matchItems (l:ls) (t:ts) = ((l,t):) <$> matchItems ls ts
 matchItems _ _           = Nothing
 
+
 -- | A search function to records. It looks for a certain element in
 -- the record by its label and returns its value
-search :: Label -> Term -> Term
-search _ (Record [])                  = error "element in Record not found"
-search (x) (Record ((label,item):xs)) = if x == label then item else search (x) (Record xs)
+searchRecord :: Label -> Term -> Term
+searchRecord _ (Record [])                  = error "element in Record not found"
+searchRecord (x) (Record ((label,item):xs)) = if x == label then item else searchRecord (x) (Record xs)
+
+
+-- | A search function to tuples. Its looks for a certain element by index
+-- in the tuple and return its value 
+searchTuple :: Int -> Term -> Term 
+searchTuple _ (Tuple [])        = error "element in Tuple not found"
+searchTuple index (Tuple items) = items !! index

@@ -117,10 +117,16 @@ lookup_item(Label, [item(Label, Term)|_], Term) :- !.
 
 lookup_item(Label, [item(_, _)|Tail], Term) :- lookup_item(Label, Tail, Term).
 
-%% tc(Exp, Gamma, Type) is det.
+%% type_checker(Exp, Gamma, Type) is det.
 %
 % The definition of a type checker for our language. 
 %
+type_checker(top, _, top) :- !. 
+type_checker(Term, Gamma, Type) :- tc(Term, Gamma, Type).
+type_checker(Term, Gamma, Type) :-
+    tc(Term, Gamma, S), 
+    rec(S, Type).
+
 
 tc(num(_),  _, int).
 
@@ -141,20 +147,13 @@ tc(app(Term1, Term2), Gamma, T) :-
     tc(Term1, Gamma, arrow(T1, T)),
     tc(Term2, Gamma, T1).
     
-tc(Term, Gamma, T) :-
-    tc(Term, Gamma, S),
-    subtype(S, T), !.
 
 :- begin_tests(tc).
-test(tc_num) :- findall(T, tc(num(5), [], T), Res), assertion(Res == [int, top]).
+test(tc_num)  :- findall(T, type_checker(num(5), [], T), Res), assertion(Res == [int, top]).
+test(tc_bool) :- findall(T, type_checker(bool(true), [], T, Res), assertion(Res == [bool, int, top])). 
 :- end_tests(tc).
 
-subtype(bool, int). 
-
-subtype(S, T)   :- ancestral(S, T).   % subtype is transitive
-subtype(_, top) :- !. 
-subtype(S, S)   :- !.                              % subtype is reflexive 
-
+subtype(bool, int).
 
 subtype(rec(_), rec([])). 
 subtype(rec(SubItems), rec([item(L, T)|SupItems])) :-
@@ -166,6 +165,7 @@ subtype(arr(S1, S2), arr(T1, T2)) :-
     subtype(T1, S1),
     subtype(S2, T2). 
 
+rec(S, T)   :- subtype(S, T).
+rec(_, top) :- !. 
+rec(S, T)   :- subtype(S, U), rec(U, T). 
 
-ancestral(S, T) :- subtype(S, T). 
-ancestral(S, T) :- subtype(S, U), ancestral(U, T). 

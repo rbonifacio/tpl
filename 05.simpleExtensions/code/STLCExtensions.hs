@@ -7,7 +7,13 @@ Maintainer  : rbonifacio@unb.br
 
 An implementation of several extensions to the Simply Typed Lambda
 Calculus, as detailed in the book Types and Programming Languages
-(B. Pierce)
+(B. Pierce).
+
+Contributors: 
+--------------------------
+
+(-) Leomar Camargo
+(-) Luisa Sinzker 
 -}
 
 module STLCExtensions where
@@ -16,9 +22,7 @@ import Prelude hiding (lookup)
 
 type Id = String
 
-type Ascription = (Id, Type)
-
-type Gamma = [Ascription]
+type Gamma = [(Id, Type)]
 
 type Label = String
 
@@ -82,11 +86,9 @@ interp (Add t1 t2)        =
     (VInt v2) = interp t2
   in VInt (v1 + v2)
 
-interp (Seq t1 t2)
-  | [] |- t1 == Just TUnit =
+interp (Seq t1 t2)        =
     let x = interp t1
     in interp t2
-  | otherwise = error "first term not Unit"
 
 subst :: Id -> Term -> Term -> Term
 subst var exp (N n) = N n

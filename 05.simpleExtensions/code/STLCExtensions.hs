@@ -28,11 +28,14 @@ type Label = String
 
 type RItem = (Label, Term)
 
+type TItem = (Term)
+
 data Type = TBool
           | TInt
           | TString
           | TUnit
-          | TRecord [Maybe Type]
+          | TRecord [(Label,Type)]
+          | TTuple [Type]
           | TArrow Type Type
      deriving(Eq, Show)
 
@@ -45,7 +48,9 @@ data Term = Var Id
           | S String
           | Unit
           | Record [RItem]
-          | Projection Term Label
+          | Tuple [TItem]
+          | TProjection Int Term
+          | RProjection Label Term
           | IfThenElse Term Term Term
           | Add Term Term
           | Term
@@ -57,7 +62,8 @@ data Value = VBool Bool
            | VInt Int
            | VString String
            | VUnit
-           | VRecord [RItem]
+           | VRecord [(Label, Value)]
+           | VTuple [Value]
            | VFunction (Id, Type) Term
            | VAscription (Term, Type)
         deriving(Eq, Show)
@@ -80,6 +86,7 @@ interp (Let x t1 t2)      = interp (subst x t1 t2)
 interp (IfThenElse c t1 t2)
   | c == B True = interp t1
   | otherwise = interp t2
+
 interp (Add t1 t2)        =
   let
     (VInt v1) = interp t1
@@ -89,6 +96,14 @@ interp (Add t1 t2)        =
 interp (Seq t1 t2)        =
     let x = interp t1
     in interp t2
+
+interp (Record items)     = let res = map (\(l,t) -> (l, interp t)) items
+                             in (VRecord res)
+interp (Tuple items)      = let res = map (\t -> interp t) items
+                             in (VTuple res)
+interp (RProjection l r)  = interp (searchRecord (l) (r))
+interp (TProjection i t)  = interp (searchTuple (i) (t))
+
 
 subst :: Id -> Term -> Term -> Term
 subst var exp (N n) = N n
@@ -130,8 +145,15 @@ gamma |- (Let v e1 e2)      = gamma          |- e1 >>= \t1 ->
                               ((v,t1):gamma) |- e2 >>= \t2 ->
                               Just t2
 
-gamma |- (Record items)     = let res = map (\(l,t) -> gamma |- t) items
-                              in Just (TRecord res)
+gamma |- (Record items)     = let res = map (\(l,t) -> (l, sure (gamma |- t))) items                               
+                               in Just (TRecord res)
+
+gamma |- (Tuple items)      = let res = map (\t -> sure (gamma |- t)) items
+                               in Just (TTuple res)
+
+gamma |- (RProjection l r)  = gamma |- (searchRecord (l) (r)) >>= \t1 -> return (t1)
+
+gamma |- (TProjection i t)  = gamma |- (searchTuple (i) (t)) >>= \t1 -> return (t1)
 
 gamma |- (Lambda (x, t1) t) = ((x,t1):gamma) |- t >>= \t2 -> return (TArrow t1 t2)
 
@@ -169,3 +191,17 @@ lookup k [] = Nothing
 lookup k ((v, t):tail)
  | k == v = Just t
  | otherwise = lookup k tail
+ 
+
+-- | A search function to records. It looks for a certain element in
+-- the record by its label and returns its value
+searchRecord :: Label -> Term -> Term
+searchRecord _ (Record [])                  = error "element in Record not found"
+searchRecord (x) (Record ((label,item):xs)) = if x == label then item else searchRecord (x) (Record xs)
+
+
+-- | A search function to tuples. Its looks for a certain element by index
+-- in the tuple and return its value 
+searchTuple :: Int -> Term -> Term 
+searchTuple _ (Tuple [])        = error "element in Tuple not found"
+searchTuple index (Tuple items) = items !! index

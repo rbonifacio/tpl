@@ -19,6 +19,8 @@ Contributors:
 module STLCExtensions where
 
 import Prelude hiding (lookup)
+import qualified Data.Set as Set
+import qualified Data.Map.Lazy as Map
 
 type Id = String
 
@@ -30,7 +32,8 @@ type RItem = (Label, Term)
 
 type TItem = (Term)
 
-data Type = TBool
+data Type = TTop
+          | TBool
           | TInt
           | TString
           | TUnit
@@ -183,6 +186,19 @@ gamma |- (Ascribe e1 t)    = gamma |- e1 >>= \t1 ->
 sure :: Maybe Type -> Type
 sure (Just x) = x
 sure Nothing = error "'Nothing' detected"
+
+(<:) :: Type -> Type -> Bool
+s <: TTop = True
+(TArrow s1 s2) <: (TArrow t1 t2) = t1 <: s1 && s2 <: t2 
+(TRecord s) <: (TRecord t) = isRecSubType s t
+s <: t  = s == t
+
+isRecSubType sub super = do
+  let subLabels   = Set.fromList $ map fst sub
+  let superLabels = Set.fromList $ map fst super
+  
+  Set.isSubsetOf superLabels subLabels
+  
 
 -- | A lookup function. It searches for a specific
 -- mapping involving an identifier and a type.

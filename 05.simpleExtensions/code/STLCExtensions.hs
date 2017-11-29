@@ -19,8 +19,7 @@ Contributors:
 module STLCExtensions where
 
 import Prelude hiding (lookup)
-import qualified Data.Set as Set
-import qualified Data.Map.Lazy as Map
+import qualified Data.Map as Map
 
 type Id = String
 
@@ -187,19 +186,24 @@ sure :: Maybe Type -> Type
 sure (Just x) = x
 sure Nothing = error "'Nothing' detected"
 
+-- | Subtyping checker. Returns a Bool indicating if the first argument
+-- is a subtype of the second.
 (<:) :: Type -> Type -> Bool
-s <: TTop = True
+_ <: TTop = True
 (TArrow s1 s2) <: (TArrow t1 t2) = t1 <: s1 && s2 <: t2 
 (TRecord s) <: (TRecord t) = isRecSubType s t
-s <: t  = s == t
+s <: t = s == t
 
-isRecSubType sub super = do
-  let subLabels   = Set.fromList $ map fst sub
-  let superLabels = Set.fromList $ map fst super
+-- | Turn Records into maps and checks for:
+-- Width, Permutation and Depth
+-- Map.lookup takes care of Width and Permutation.
+-- Depth is taken care by the subtyping 'typ2 <: typ'.
+isRecSubType :: [(Label,Type)] -> [(Label,Type)] -> Bool
+isRecSubType sub super = all sRcd super
+  where sRcd (label, typ) = case Map.lookup label (Map.fromList sub) of
+                                     Just typ2 -> typ2 <: typ
+                                     Nothing -> False
   
-  Set.isSubsetOf superLabels subLabels
-  
-
 -- | A lookup function. It searches for a specific
 -- mapping involving an identifier and a type.
 lookup :: Id -> Gamma -> Maybe Type

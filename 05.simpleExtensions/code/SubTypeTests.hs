@@ -15,6 +15,7 @@ testSuite = TestList [
     TestLabel "Record: RcdPerm - r2perm <: r2" rec6,
     TestLabel "Record: RcdDepth - r4 <: r5" rec7,
     TestLabel "Record: RcdDepth - r5 <: r4" rec8,
+    TestLabel "Record: Transitivity - recA <: recB, recB <: recC, recA <: recC" recTrans,
     TestLabel "TBool <: TBool" reflTBool,
     TestLabel "TInt <: TInt" reflTInt, 
     TestLabel "TString <: TString" reflTString,
@@ -33,6 +34,11 @@ innerRecX = TRecord [("a", TInt), ("b", TInt)]
 innerRecY = TRecord [("m", TInt), ("n", TInt)]
 r4 = TRecord [("x", innerRecX), ("y", innerRecY)]
 r5 = TRecord [("x", TRecord [("a", TInt)]), ("y", TRecord [("n", TInt)]) ]
+
+-- Transitivity on Records
+recA = TRecord [("v1", TInt), ("v2", TString), ("v3", TBool)]
+recB = TRecord [("v3", TBool), ("v2", TString)]
+recC = TRecord [("v2", TString)]
 
 -- T3 <: T1      T2 <: T4
 -- ----------------------
@@ -62,6 +68,10 @@ rec7 = TestCase $ assertEqual "Corresponding fields should keep a subtype relati
 
 rec8 = TestCase $ assertEqual "Corresponding fields should keep a subtype relation" False (r5 <: r4)
 
+recTrans = TestCase $ do assertEqual "recA should be subtype of recB" True (recA <: recB)
+                         assertEqual "recB should be subtype of recC" True (recB <: recC)
+                         assertEqual "recA should be subtype of recC" True (recA <: recC)
+                                              
 reflTInt = TestCase $ assertEqual "TInt should be subtype of itself" True (TInt <: TInt)
 reflTBool = TestCase $ assertEqual "TInt should be subtype of itself" True (TBool <: TBool)
 reflTString = TestCase $ assertEqual "TInt should be subtype of itself" True (TString <: TString)

@@ -16,6 +16,7 @@ testSuite = TestList [
     TestLabel "Record: RcdDepth - r4 <: r5" rec7,
     TestLabel "Record: RcdDepth - r5 <: r4" rec8,
     TestLabel "Record: Transitivity - recA <: recB, recB <: recC, recA <: recC" recTrans,
+    TestLabel "Record: Reflexivity" recRefl,
     TestLabel "TBool <: TBool" reflTBool,
     TestLabel "TInt <: TInt" reflTInt, 
     TestLabel "TString <: TString" reflTString,
@@ -71,7 +72,17 @@ rec8 = TestCase $ assertEqual "Corresponding fields should keep a subtype relati
 recTrans = TestCase $ do assertEqual "recA should be subtype of recB" True (recA <: recB)
                          assertEqual "recB should be subtype of recC" True (recB <: recC)
                          assertEqual "recA should be subtype of recC" True (recA <: recC)
-                                              
+
+recRefl = TestCase $ do assertEqual "A record should be subtype/supertype of itself" True (recA <: recA)
+                        assertEqual "A record should be subtype/supertype of itself" True (recB <: recB)
+                        assertEqual "A record should be subtype/supertype of itself" True (recC <: recC)                        
+                        assertEqual "A record should be subtype/supertype of itself" True (r <: r)
+                        assertEqual "A record should be subtype/supertype of itself" True (r1 <: r1)                        
+                        assertEqual "A record should be subtype/supertype of itself" True (r2 <: r2)                        
+                        assertEqual "A record should be subtype/supertype of itself" True (r3 <: r3)                        
+                        assertEqual "A record should be subtype/supertype of itself" True (r4 <: r4)
+                        assertEqual "A record should be subtype/supertype of itself" True (r5 <: r5)  
+                        
 reflTInt = TestCase $ assertEqual "TInt should be subtype of itself" True (TInt <: TInt)
 reflTBool = TestCase $ assertEqual "TInt should be subtype of itself" True (TBool <: TBool)
 reflTString = TestCase $ assertEqual "TInt should be subtype of itself" True (TString <: TString)

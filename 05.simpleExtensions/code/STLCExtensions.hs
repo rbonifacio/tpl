@@ -224,7 +224,7 @@ lookup k ((v, t):tail)
 searchRecord :: Label -> Term -> Term
 searchRecord _ (Record [])                  = error "element in Record not found"
 searchRecord (x) (Record ((label,item):xs)) = if x == label then item else searchRecord (x) (Record xs)
-
+searchRecord (x) (TValue (VRecord ((label,item):xs))) = if x == label then (TValue item) else searchRecord (x) (TValue (VRecord xs))
 
 -- | A search function to tuples. Its looks for a certain element by index
 -- in the tuple and return its value 

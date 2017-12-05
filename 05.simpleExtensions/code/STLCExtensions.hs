@@ -4,14 +4,11 @@ Description : Simple Extensions to the Simply Typed Lambda Calculus
 Copyright   : (c) rbonifacio, 2017
 License     : GPL-3
 Maintainer  : rbonifacio@unb.br
-
 An implementation of several extensions to the Simply Typed Lambda
 Calculus, as detailed in the book Types and Programming Languages
 (B. Pierce).
-
 Contributors: 
 --------------------------
-
 (-) Leomar Camargo
 (-) Luisa Sinzker 
 -}
@@ -115,7 +112,7 @@ interp (RProjection l r)  = interp (searchRecord (l) (r))
 interp (TProjection i t)  = interp (searchTuple (i) (t))
 
 interp (Inl t) = VInl (interp t)
-interp (Inr t) = VInl (interp t)
+interp (Inr t) = VInr (interp t)
 
 interp (Case t0 (x1, t1) (x2, t2)) =
   case interp t0 of
@@ -144,6 +141,7 @@ subst var v1 (Ascribe x t) = Ascribe(subst var v1 x) t
 subst var v1 (Inl t) = Inl (subst var v1 t)
 subst var v1 (Inr t) = Inr (subst var v1 t)
 subst var v1 (Record items) = Record $ map (\(l,t) -> (l, subst var v1 t)) items
+subst var v1 (Tuple items) = Tuple $ map (\(t) -> (subst var v1 t)) items
 subst var v1 (RProjection l t) = RProjection l (subst var v1 t)
 subst var v1 (Case t0 (x1,t1) (x2, t2)) = Case (subst var v1 t0)
                                                (x1, subst var v1 t1)
@@ -205,6 +203,12 @@ gamma |- (Seq e1 e2)        = gamma |- e1 >>= \t1 ->
 
 gamma |- (Ascribe e1 t)    = gamma |- e1 >>= \t1 ->
                               if t1 == t then return t else Nothing
+                             
+--ainda contem erros
+gamma |- (Case t0 (x1,t1) (x2,t2)) = gamma |- t0 >>= \a ->
+                                     gamma |- t1 >>= \b ->
+                                     gamma |- t2 >>= \c ->
+                                     if (a == b && a == c) then return (TSum b c) else Nothing
 
 sure :: Maybe Type -> Type
 sure (Just x) = x
@@ -222,9 +226,9 @@ lookup k ((v, t):tail)
 -- | A search function to records. It looks for a certain element in
 -- the record by its label and returns its value
 searchRecord :: Label -> Term -> Term
-searchRecord _ (Record [])                  = error "element in Record not found"
-searchRecord (x) (Record ((label,item):xs)) = if x == label then item else searchRecord (x) (Record xs)
-searchRecord (x) (TValue (VRecord ((label,item):xs))) = if x == label then (TValue item) else searchRecord (x) (TValue (VRecord xs))
+searchRecord _ (Record [])                            = error "element in Record not found"
+searchRecord (x) (Record ((label,item):xs))           = if x == label then item else searchRecord (x) (Record xs)
+
 
 -- | A search function to tuples. Its looks for a certain element by index
 -- in the tuple and return its value 
@@ -242,6 +246,7 @@ r2 = Record [("name", S "leomar"), ("email", S "leomar@unb")]
 t1 = sure $ [] |- r1
 t2 = sure $ [] |- r2
 t3 = (TSum t1 t2) 
+
 
 getName = Lambda ("a", t3) (Case (Var "a")
                              ("x", RProjection "firstLast" (Var "x"))

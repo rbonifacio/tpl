@@ -19,6 +19,7 @@ Contributors:
 module STLCExtensions where
 
 import Prelude hiding (lookup)
+import qualified Data.Map as Map
 
 type Id = String
 
@@ -30,7 +31,15 @@ type RItem = (Label, Term)
 
 type TItem = (Term)
 
-data Type = TBool
+type SubRel = [(Type, Type)]
+
+-- | List of tuples representing subtype relations.
+-- Subtype should be the first element, supertype should be the second.
+sub_sup = [(TBool,TInt),(TInt,TNumber)]
+
+data Type = TTop
+          | TBool
+          | TNumber -- For subtyping transitivity purposes
           | TInt
           | TString
           | TUnit
@@ -210,6 +219,34 @@ sure :: Maybe Type -> Type
 sure (Just x) = x
 sure Nothing = error "'Nothing' detected"
 
+-- | Subtyping checker. Returns a Bool indicating if the first argument
+-- is a subtype of the second.
+(<:) :: Type -> Type -> Bool
+_ <: TTop = True
+(TArrow s1 s2) <: (TArrow t1 t2) = t1 <: s1 && s2 <: t2 
+(TRecord s) <: (TRecord t) = isRecSubType s t
+s <: t = if s == t then True else lookup_subtype s t sub_sup
+
+-- | Turn Records into maps and checks for:
+-- Width, Permutation and Depth
+-- Map.lookup takes care of Width and Permutation.
+-- Depth is taken care by the subtyping 'typ2 <: typ'.
+isRecSubType :: [(Label,Type)] -> [(Label,Type)] -> Bool
+isRecSubType sub super = all sRcd super
+  where sRcd (label, typ) = case Map.lookup label (Map.fromList sub) of
+                                     Just typ2 -> typ2 <: typ
+                                     Nothing -> False
+                                     
+-- | Lookup function for transitivity
+lookup_subtype :: Type -> Type -> SubRel -> Bool
+lookup_subtype sub sup [] = False
+lookup_subtype sub sup ((v, t):tail)
+ | sub == v && sup == t = True
+ | sub == v && sup /= t = lookup_subtype t sup tail
+ | sub /= v && sup /= t = lookup_subtype sub sup tail
+ | sub /= v && sup == t = lookup_subtype sub sup tail
+ | otherwise = False
+  
 -- | A lookup function. It searches for a specific
 -- mapping involving an identifier and a type.
 lookup :: Id -> Gamma -> Maybe Type

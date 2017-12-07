@@ -46,6 +46,7 @@ data Type = TTop
           | TRecord [(Label,Type)]
           | TTuple [Type]
           | TArrow Type Type
+          | TSum Type Type 
      deriving(Eq, Show)
 
 data Term = Var Id
@@ -58,6 +59,9 @@ data Term = Var Id
           | Unit
           | Record [RItem]
           | Tuple [TItem]
+          | Inl Term
+          | Inr Term
+          | Case Term (Id, Term) (Id, Term) 
           | TProjection Int Term
           | RProjection Label Term
           | IfThenElse Term Term Term
@@ -65,12 +69,15 @@ data Term = Var Id
           | Term
           | Seq Term Term
           | Ascribe Term Type
+          | TValue Value
         deriving(Eq, Show)
 
 data Value = VBool Bool
            | VInt Int
            | VString String
            | VUnit
+           | VInl Value
+           | VInr Value
            | VRecord [(Label, Value)]
            | VTuple [Value]
            | VFunction (Id, Type) Term
@@ -88,12 +95,13 @@ interp (Ascribe x t)      = VAscription (x, t)
 interp (App t1 t2)        =
   let v = interp t1
   in case v of
-    VFunction(x,t) e -> interp(subst x t2 e)
+    VFunction(x,t) e -> interp(subst x (interp t2) e)
     otherwise -> error "not a lambda expression"
+interp (TValue v) = v
 
-interp (Let x t1 t2)      = interp (subst x t1 t2)
+interp (Let x t1 t2)      = interp (subst x (interp t1) t2)
 interp (IfThenElse c t1 t2)
-  | c == B True = interp t1
+  | (interp c) == VBool True = interp t1
   | otherwise = interp t2
 
 interp (Add t1 t2)        =
@@ -110,28 +118,46 @@ interp (Record items)     = let res = map (\(l,t) -> (l, interp t)) items
                              in (VRecord res)
 interp (Tuple items)      = let res = map (\t -> interp t) items
                              in (VTuple res)
+                                
 interp (RProjection l r)  = interp (searchRecord (l) (r))
+
 interp (TProjection i t)  = interp (searchTuple (i) (t))
 
+interp (Inl t) = VInl (interp t)
+interp (Inr t) = VInl (interp t)
 
-subst :: Id -> Term -> Term -> Term
-subst var exp (N n) = N n
-subst var exp (B b) = B b
-subst var exp (S s) = S s
-subst var exp (Unit) = Unit
-subst var exp (Add t1 t2) = Add (subst var exp t1) (subst var exp t2)
-subst var exp (Lambda arg body) = Lambda arg (subst var exp body)
-subst var exp (App t1 t2) = App (subst var exp t1) (subst var exp t2)
-subst var exp (Let subId namedExp body)
-  | var == subId = (Let subId (subst var exp namedExp) body)
-  | otherwise = (Let subId (subst var exp namedExp) (subst var exp body))
-subst var exp (Var x)
-  | var == x = exp
+interp (Case t0 (x1, t1) (x2, t2)) =
+  case interp t0 of
+    (VInl v) -> interp $ subst x1 v t1
+    (VInr v) -> interp $ subst x2 v t2 
+  
+
+
+subst :: Id -> Value -> Term -> Term
+subst var v1 (N n) = N n
+subst var v1 (B b) = B b
+subst var v1 (S s) = S s
+subst var v1 (Unit) = Unit
+subst var v1 (Add t1 t2) = Add (subst var v1 t1) (subst var v1 t2)
+subst var v1 (Lambda arg body) = Lambda arg (subst var v1 body)
+subst var v1 (App t1 t2) = App (subst var v1 t1) (subst var v1 t2)
+subst var v1 (Let subId namedExp body)
+  | var == subId = (Let subId (subst var v1 namedExp) body)
+  | otherwise = (Let subId (subst var v1 namedExp) (subst var v1 body))
+subst var v1 (Var x)
+  | var == x = (TValue v1)
   | otherwise = (Var x)
-subst var exp (IfThenElse c t1 t2) = IfThenElse (subst var exp c)(subst var exp t1)(subst var exp t2)
-subst var exp (Seq t1 t2) = Seq (subst var exp t1)(subst var exp t2)
-subst var exp (Ascribe x t) = Ascribe(subst var exp x) t
-
+subst var v1 (IfThenElse c t1 t2) = IfThenElse (subst var v1 c)(subst var v1 t1)(subst var v1 t2)
+subst var v1 (Seq t1 t2) = Seq (subst var v1 t1)(subst var v1 t2)
+subst var v1 (Ascribe x t) = Ascribe(subst var v1 x) t
+subst var v1 (Inl t) = Inl (subst var v1 t)
+subst var v1 (Inr t) = Inr (subst var v1 t)
+subst var v1 (Record items) = Record $ map (\(l,t) -> (l, subst var v1 t)) items
+subst var v1 (RProjection l t) = RProjection l (subst var v1 t)
+subst var v1 (Case t0 (x1,t1) (x2, t2)) = Case (subst var v1 t0)
+                                               (x1, subst var v1 t1)
+                                               (x2, subst var v1 t2) 
+subst var v1 (TValue v) = TValue v
 
 -- | The type checker function. It returns either a
 -- type (when the expression is well typed) or Nothing,
@@ -235,10 +261,25 @@ lookup k ((v, t):tail)
 searchRecord :: Label -> Term -> Term
 searchRecord _ (Record [])                  = error "element in Record not found"
 searchRecord (x) (Record ((label,item):xs)) = if x == label then item else searchRecord (x) (Record xs)
-
+searchRecord (x) (TValue (VRecord ((label,item):xs))) = if x == label then (TValue item) else searchRecord (x) (TValue (VRecord xs))
 
 -- | A search function to tuples. Its looks for a certain element by index
 -- in the tuple and return its value 
 searchTuple :: Int -> Term -> Term 
 searchTuple _ (Tuple [])        = error "element in Tuple not found"
 searchTuple index (Tuple items) = items !! index
+
+
+
+-- test cases
+
+r1 = Record [("firstLast", S "walter"), ("address", S "unb")]
+r2 = Record [("name", S "leomar"), ("email", S "leomar@unb")]
+
+t1 = sure $ [] |- r1
+t2 = sure $ [] |- r2
+t3 = (TSum t1 t2) 
+
+getName = Lambda ("a", t3) (Case (Var "a")
+                             ("x", RProjection "firstLast" (Var "x"))
+                             ("x", RProjection "name" (Var "x")))

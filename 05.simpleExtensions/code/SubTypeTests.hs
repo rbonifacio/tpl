@@ -4,6 +4,7 @@ import STLCExtensions
 import Test.HUnit
 
 -- run the test suite: runTestTT testSuite
+runTests = runTestTT testSuite
 
 testSuite = TestList [ 
     TestLabel "Record: r2 <: r" recc,
@@ -23,7 +24,8 @@ testSuite = TestList [
     TestLabel "arr <: arr" reflArr,
     TestLabel "Arrow: arr1 <: arr" arrow1,
     TestLabel "Arrow: arr2 <: arr" arrow2,
-    TestLabel "Arrow: arr3 <: arr " arrow3
+    TestLabel "Arrow: arr3 <: arr " arrow3,
+    TestLabel "Transitivity with Primitive Types" trans
   ]
 
 r = TRecord [("y", TString)]
@@ -91,3 +93,7 @@ reflArr = TestCase $ assertEqual "arr should be subtype of itself" True (arr <: 
 arrow1 = TestCase $ assertEqual "Should be subtype" True (arr1 <: arr)
 arrow2 = TestCase $ assertEqual "Should not be subtype" False (arr2 <: arr)
 arrow3 = TestCase $ assertEqual "Should not be subtype" False (arr3 <: arr)
+
+trans = TestCase $ do assertEqual "TBool <: TInt should return true (sub_sup list of tuples)" True (TBool <: TInt)
+                      assertEqual "TInt <: TNumber should return true (sub_sup list of tuples)" True (TInt <: TNumber)
+                      assertEqual "TBool <: TNumber should return true (TRANSITIVITY)" True (TBool <: TNumber)
